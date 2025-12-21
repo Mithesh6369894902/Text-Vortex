@@ -1,14 +1,15 @@
-# =========================
-# 🔹 CORE IMPORTS
-# =========================
+# ======================================================
+# 🌪️ TextVortex — Advanced Real-Time NLP Intelligence
+# ======================================================
+
 import streamlit as st
 import nltk
 
-# =========================
-# 🔹 SAFE NLTK DOWNLOADER (MUST BE FIRST)
-# =========================
+# ------------------------------------------------------
+# ✅ SAFE NLTK DOWNLOADER (MUST RUN FIRST)
+# ------------------------------------------------------
 @st.cache_resource
-def download_nltk_resources():
+def download_nltk():
     resources = [
         "punkt",
         "stopwords",
@@ -22,39 +23,32 @@ def download_nltk_resources():
         except LookupError:
             nltk.download(r)
 
-download_nltk_resources()
+download_nltk()
 
-# =========================
-# 🔹 NLP IMPORTS (AFTER DOWNLOAD)
-# =========================
+# ------------------------------------------------------
+# NLP IMPORTS (AFTER DOWNLOAD)
+# ------------------------------------------------------
 from nltk.corpus import stopwords, wordnet
 from nltk.tokenize import word_tokenize, sent_tokenize
 from nltk.stem import PorterStemmer, WordNetLemmatizer
 from nltk import FreqDist, pos_tag
 from nltk.util import ngrams
 
-# =========================
-# 🔹 DATA & VISUAL IMPORTS
-# =========================
+# ------------------------------------------------------
+# OTHER IMPORTS
+# ------------------------------------------------------
 import pandas as pd
-import numpy as np
 import matplotlib.pyplot as plt
 from wordcloud import WordCloud
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 import textstat
 import re
-import contractions
 import base64
 
-# =========================
-# 🔹 GLOBAL CONSTANTS
-# =========================
-STOPWORDS = set(stopwords.words("english"))
-
-# =========================
-# 🔹 STREAMLIT CONFIG
-# =========================
+# ------------------------------------------------------
+# STREAMLIT CONFIG
+# ------------------------------------------------------
 st.set_page_config(
     page_title="TextVortex 🌪️",
     page_icon="🌪️",
@@ -63,9 +57,30 @@ st.set_page_config(
 
 st.title("🌪️ TextVortex — Advanced Real-Time NLP Intelligence")
 
-# =========================
-# 🔹 SIDEBAR
-# =========================
+# ------------------------------------------------------
+# GLOBAL CONSTANTS
+# ------------------------------------------------------
+STOPWORDS = set(stopwords.words("english"))
+
+# ------------------------------------------------------
+# SAFE CONTRACTION EXPANDER (NO EXTERNAL LIBRARY)
+# ------------------------------------------------------
+def expand_contractions(text):
+    contractions_map = {
+        "can't": "cannot", "won't": "will not", "don't": "do not",
+        "isn't": "is not", "aren't": "are not", "wasn't": "was not",
+        "weren't": "were not", "hasn't": "has not", "haven't": "have not",
+        "hadn't": "had not", "doesn't": "does not", "didn't": "did not",
+        "i'm": "i am", "you're": "you are", "they're": "they are",
+        "we're": "we are", "it's": "it is", "that's": "that is"
+    }
+    for k, v in contractions_map.items():
+        text = re.sub(rf"\b{k}\b", v, text, flags=re.IGNORECASE)
+    return text
+
+# ------------------------------------------------------
+# SIDEBAR
+# ------------------------------------------------------
 page = st.sidebar.radio(
     "🌐 Select Feature",
     [
@@ -76,7 +91,7 @@ page = st.sidebar.radio(
         "🏷️ POS Tagging",
         "🌱 Stemming",
         "🌿 Lemmatization",
-        "🧮 Normalization",
+        "🧮 Text Normalization",
         "🔢 N-Grams",
         "🔑 Keyword Extraction",
         "🔄 Text Similarity",
@@ -85,162 +100,156 @@ page = st.sidebar.radio(
     ]
 )
 
-# =========================
-# 🔹 INPUT HANDLER
-# =========================
-if "text_data" not in st.session_state:
-    st.session_state.text_data = ""
-
 st.sidebar.subheader("📝 Input Text")
-user_text = st.sidebar.text_area("Enter text", height=200)
+text_input = st.sidebar.text_area("Enter text", height=200)
 
-if st.sidebar.button("✅ Load Text"):
-    st.session_state.text_data = user_text
+if st.sidebar.button("Load Text"):
+    st.session_state.text = text_input
 
-text = st.session_state.text_data
+text = st.session_state.get("text", "")
 
-# =========================
-# 🔹 HOME
-# =========================
+# ------------------------------------------------------
+# HOME
+# ------------------------------------------------------
 if page == "🏠 Home":
     st.markdown("""
-    ### 🌪️ What is TextVortex?
-    **TextVortex** is a unified, real-time NLP analysis platform designed for  
-    **research, education, and intelligent text exploration**.
+### 🌪️ What is TextVortex?
 
-    ✔ Cloud-safe  
-    ✔ Explainable NLP  
-    ✔ Conference-ready  
-    ✔ Modular & future-proof  
-    """)
+**TextVortex** is a unified, real-time Natural Language Processing (NLP) intelligence platform  
+designed for **research, education, and explainable text analytics**.
 
-# =========================
-# 🔹 TEXT STATS
-# =========================
+✔ Cloud-safe  
+✔ Conference-ready  
+✔ Modular NLP pipeline  
+✔ Future-proof architecture  
+""")
+
+# ------------------------------------------------------
+# TEXT STATISTICS
+# ------------------------------------------------------
 elif page == "📊 Text Statistics":
     if text:
         st.metric("Characters", len(text))
         st.metric("Words", len(text.split()))
         st.metric("Sentences", len(sent_tokenize(text)))
     else:
-        st.warning("Enter text first")
+        st.warning("Please load text")
 
-# =========================
-# 🔹 TOKENIZATION
-# =========================
+# ------------------------------------------------------
+# TOKENIZATION
+# ------------------------------------------------------
 elif page == "🔠 Tokenization":
     if text:
         st.write(word_tokenize(text))
     else:
-        st.warning("Enter text first")
+        st.warning("Please load text")
 
-# =========================
-# 🔹 STOPWORDS
-# =========================
+# ------------------------------------------------------
+# STOPWORD REMOVAL
+# ------------------------------------------------------
 elif page == "🛑 Stopword Removal":
     if text:
         tokens = word_tokenize(text)
         filtered = [w for w in tokens if w.lower() not in STOPWORDS]
         st.write(filtered)
     else:
-        st.warning("Enter text first")
+        st.warning("Please load text")
 
-# =========================
-# 🔹 POS TAGGING
-# =========================
+# ------------------------------------------------------
+# POS TAGGING
+# ------------------------------------------------------
 elif page == "🏷️ POS Tagging":
     if text:
         tokens = word_tokenize(text)
         tagged = pos_tag(tokens)
-        df = pd.DataFrame(tagged, columns=["Word", "POS"])
-        st.dataframe(df)
+        st.dataframe(pd.DataFrame(tagged, columns=["Word", "POS"]))
     else:
-        st.warning("Enter text first")
+        st.warning("Please load text")
 
-# =========================
-# 🔹 STEMMING
-# =========================
+# ------------------------------------------------------
+# STEMMING
+# ------------------------------------------------------
 elif page == "🌱 Stemming":
     if text:
         stemmer = PorterStemmer()
         tokens = word_tokenize(text)
         st.write([stemmer.stem(w) for w in tokens])
     else:
-        st.warning("Enter text first")
+        st.warning("Please load text")
 
-# =========================
-# 🔹 LEMMATIZATION
-# =========================
+# ------------------------------------------------------
+# LEMMATIZATION
+# ------------------------------------------------------
 elif page == "🌿 Lemmatization":
     if text:
         lemmatizer = WordNetLemmatizer()
         tokens = word_tokenize(text)
         st.write([lemmatizer.lemmatize(w) for w in tokens])
     else:
-        st.warning("Enter text first")
+        st.warning("Please load text")
 
-# =========================
-# 🔹 NORMALIZATION
-# =========================
-elif page == "🧮 Normalization":
+# ------------------------------------------------------
+# NORMALIZATION
+# ------------------------------------------------------
+elif page == "🧮 Text Normalization":
     if text:
         t = text.lower()
-        t = contractions.fix(t)
+        t = expand_contractions(t)
         t = re.sub(r"[^\w\s]", "", t)
         tokens = [w for w in word_tokenize(t) if w not in STOPWORDS]
         st.write(" ".join(tokens))
     else:
-        st.warning("Enter text first")
+        st.warning("Please load text")
 
-# =========================
-# 🔹 N-GRAMS
-# =========================
+# ------------------------------------------------------
+# N-GRAMS
+# ------------------------------------------------------
 elif page == "🔢 N-Grams":
     if text:
-        n = st.slider("N", 1, 3, 2)
+        n = st.slider("Select N", 1, 3, 2)
         tokens = word_tokenize(text)
         st.write(list(ngrams(tokens, n)))
     else:
-        st.warning("Enter text first")
+        st.warning("Please load text")
 
-# =========================
-# 🔹 KEYWORDS
-# =========================
+# ------------------------------------------------------
+# KEYWORD EXTRACTION
+# ------------------------------------------------------
 elif page == "🔑 Keyword Extraction":
     if text:
         tokens = [w.lower() for w in word_tokenize(text) if w.isalnum()]
         freq = FreqDist(tokens)
-        df = pd.DataFrame(freq.items(), columns=["Word", "Frequency"]).sort_values(by="Frequency", ascending=False)
-        st.dataframe(df.head(20))
+        df = pd.DataFrame(freq.items(), columns=["Keyword", "Frequency"])
+        st.dataframe(df.sort_values("Frequency", ascending=False).head(20))
     else:
-        st.warning("Enter text first")
+        st.warning("Please load text")
 
-# =========================
-# 🔹 SIMILARITY
-# =========================
+# ------------------------------------------------------
+# TEXT SIMILARITY
+# ------------------------------------------------------
 elif page == "🔄 Text Similarity":
     t1 = st.text_area("Text 1")
     t2 = st.text_area("Text 2")
     if st.button("Compare"):
-        vec = TfidfVectorizer()
-        tfidf = vec.fit_transform([t1, t2])
+        vectorizer = TfidfVectorizer()
+        tfidf = vectorizer.fit_transform([t1, t2])
         score = cosine_similarity(tfidf[0], tfidf[1])[0][0]
-        st.metric("Similarity Score", round(score, 3))
+        st.metric("Cosine Similarity", round(score, 3))
 
-# =========================
-# 🔹 COMPLEXITY
-# =========================
+# ------------------------------------------------------
+# TEXT COMPLEXITY
+# ------------------------------------------------------
 elif page == "📈 Text Complexity":
     if text:
-        st.metric("Flesch Reading Ease", textstat.flesch_reading_ease(text))
-        st.metric("Gunning Fog Index", textstat.gunning_fog(text))
+        st.metric("Flesch Reading Ease", round(textstat.flesch_reading_ease(text), 2))
+        st.metric("Gunning Fog Index", round(textstat.gunning_fog(text), 2))
         st.metric("Grade Level", textstat.text_standard(text))
     else:
-        st.warning("Enter text first")
+        st.warning("Please load text")
 
-# =========================
-# 🔹 WORD CLOUD
-# =========================
+# ------------------------------------------------------
+# WORD CLOUD
+# ------------------------------------------------------
 elif page == "☁️ Word Cloud":
     if text:
         wc = WordCloud(width=800, height=400, background_color="white").generate(text)
@@ -248,4 +257,5 @@ elif page == "☁️ Word Cloud":
         plt.axis("off")
         st.pyplot(plt)
     else:
-        st.warning("Enter text first")
+        st.warning("Please load text")
+
