@@ -29,6 +29,22 @@ st.caption("Real-Time Linguistic Intelligence Engine")
 STOPWORDS = set(stopwords.words("english"))
 LEMMATIZER = WordNetLemmatizer()
 
+def download_nltk_resources():
+    resources = [
+        "punkt",
+        "stopwords",
+        "wordnet",
+        "omw-1.4",
+        "averaged_perceptron_tagger"
+    ]
+    for r in resources:
+        try:
+            nltk.data.find(r)
+        except LookupError:
+            nltk.download(r)
+
+download_nltk_resources()
+
 def normalize(text):
     text = text.lower()
     text = re.sub(r"[^\w\s]", "", text)
