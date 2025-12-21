@@ -2,28 +2,31 @@
 # 🌪️ TextVortex — Advanced Real-Time NLP Intelligence
 # ======================================================
 
-import streamlit as st
+# ------------------------------------------------------
+# ✅ BULLETPROOF NLTK SETUP (Python 3.13 + Streamlit)
+# ------------------------------------------------------
 import nltk
+import streamlit as st
 
-# ------------------------------------------------------
-# ✅ SAFE NLTK DOWNLOADER (MUST RUN FIRST)
-# ------------------------------------------------------
 @st.cache_resource
-def download_nltk():
+def setup_nltk():
     resources = [
-        "punkt",
-        "stopwords",
-        "wordnet",
-        "omw-1.4",
-        "averaged_perceptron_tagger"
+        "tokenizers/punkt",
+        "tokenizers/punkt_tab/english",
+        "corpora/stopwords",
+        "corpora/wordnet",
+        "corpora/omw-1.4",
+        "taggers/averaged_perceptron_tagger"
     ]
-    for r in resources:
-        try:
-            nltk.data.find(r)
-        except LookupError:
-            nltk.download(r)
 
-download_nltk()
+    for resource in resources:
+        try:
+            nltk.data.find(resource)
+        except LookupError:
+            nltk.download(resource.split("/")[-1])
+
+setup_nltk()
+
 
 # ------------------------------------------------------
 # NLP IMPORTS (AFTER DOWNLOAD)
