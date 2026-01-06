@@ -22,14 +22,19 @@ from nltk import pos_tag
 # ======================================================
 @st.cache_resource
 def setup_nltk():
-    for r in ["stopwords", "wordnet", "omw-1.4", "averaged_perceptron_tagger"]:
+    resources = [
+        "stopwords",
+        "wordnet",
+        "omw-1.4",
+        "averaged_perceptron_tagger"
+    ]
+    for r in resources:
         try:
-            nltk.data.find(f"corpora/{r}")
+            nltk.data.find(r)
         except LookupError:
             nltk.download(r)
 
 setup_nltk()
-STOPWORDS = set(stopwords.words("english"))
 
 # ======================================================
 # 🔐 SAFE TOKENIZERS (REGEX-BASED)
