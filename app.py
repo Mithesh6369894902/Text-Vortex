@@ -21,22 +21,20 @@ from nltk import pos_tag
 # ======================================================
 @st.cache_resource
 def setup_nltk():
-    resources = [
-        ("corpora/stopwords", "stopwords"),
-        ("corpora/wordnet", "wordnet"),
-        ("corpora/omw-1.4", "omw-1.4"),
-        ("taggers/averaged_perceptron_tagger", "averaged_perceptron_tagger"),
-    ]
-    for path, name in resources:
+    resources = {
+        "stopwords": "corpora/stopwords",
+        "wordnet": "corpora/wordnet",
+        "omw-1.4": "corpora/omw-1.4",
+        "averaged_perceptron_tagger": "taggers/averaged_perceptron_tagger_eng"
+    }
+
+    for pkg, path in resources.items():
         try:
             nltk.data.find(path)
         except LookupError:
-            nltk.download(name)
-
-    return True  # indicate setup done
+            nltk.download(pkg)
 
 setup_nltk()
-
 STOPWORDS = set(stopwords.words("english"))
 # ======================================================
 # 🔐 SAFE TOKENIZERS (REGEX-BASED)
@@ -124,9 +122,12 @@ elif page == "🛑 Stopwords Removal" and validate():
 # POS TAGGING
 # ======================================================
 elif page == "🏷️ POS Tagging" and validate():
-    tokens = safe_word_tokenize(text)
-    tags = pos_tag(tokens)
-    st.dataframe(pd.DataFrame(tags, columns=["Word", "POS"]))
+    try:
+        tokens = safe_word_tokenize(text)
+        tags = pos_tag(tokens)
+        st.dataframe(pd.DataFrame(tags, columns=["Word", "POS"]))
+    except Exception as e:
+        st.error("POS Tagger unavailable in this environment.")
 
 # ======================================================
 # STEMMING
