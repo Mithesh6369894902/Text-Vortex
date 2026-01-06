@@ -16,26 +16,28 @@ import nltk
 from nltk.corpus import stopwords, wordnet
 from nltk.stem import PorterStemmer, WordNetLemmatizer
 from nltk import pos_tag
-
 # ======================================================
 # SAFE NLTK SETUP (NO punkt / no crashes)
 # ======================================================
 @st.cache_resource
 def setup_nltk():
     resources = [
-        "stopwords",
-        "wordnet",
-        "omw-1.4",
-        "averaged_perceptron_tagger"
+        ("corpora/stopwords", "stopwords"),
+        ("corpora/wordnet", "wordnet"),
+        ("corpora/omw-1.4", "omw-1.4"),
+        ("taggers/averaged_perceptron_tagger", "averaged_perceptron_tagger"),
     ]
-    for r in resources:
+    for path, name in resources:
         try:
-            nltk.data.find(r)
+            nltk.data.find(path)
         except LookupError:
-            nltk.download(r)
+            nltk.download(name)
+
+    return True  # indicate setup done
 
 setup_nltk()
 
+STOPWORDS = set(stopwords.words("english"))
 # ======================================================
 # 🔐 SAFE TOKENIZERS (REGEX-BASED)
 # ======================================================
